@@ -1,0 +1,18 @@
+package com.rubymusic.interaction.service;
+
+import com.rubymusic.interaction.model.PlayHistory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+import java.util.UUID;
+
+public interface PlayHistoryService {
+
+    /**
+     * Records a play and publishes a {@code song.played} Kafka event so
+     * catalog-service can increment the song's play_count asynchronously.
+     */
+    void recordPlay(UUID userId, UUID songId, int durationPlayedSeconds);
+
+    Page<PlayHistory> getPlayHistory(UUID userId, Pageable pageable);
+}
