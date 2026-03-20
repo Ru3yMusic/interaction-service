@@ -11,7 +11,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -20,11 +19,6 @@ public class LibraryController implements LibraryApi {
 
     private final UserLibraryService libraryService;
     private final HttpServletRequest httpRequest;
-
-    @Override
-    public Optional<HttpServletRequest> getRequest() {
-        return Optional.of(httpRequest);
-    }
 
     private UUID currentUserId() {
         return UUID.fromString(httpRequest.getHeader("X-User-Id"));
