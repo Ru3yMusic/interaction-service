@@ -17,7 +17,7 @@ security:
 
 tags:
   - name: Preferences
-    description: Onboarding and genre/artist preferences
+    description: Onboarding and genre/artist/station preferences
   - name: Song Interactions
     description: Likes and hidden songs
   - name: Library
@@ -76,6 +76,35 @@ paths:
       tags: [Preferences]
       operationId: saveArtistPreferences
       summary: Save artist preferences (replaces existing)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UuidListRequest'
+      responses:
+        '204':
+          description: Preferences saved
+
+  /api/v1/interactions/preferences/stations:
+    get:
+      tags: [Preferences]
+      operationId: getStationPreferences
+      summary: Get selected station IDs for the authenticated user
+      responses:
+        '200':
+          description: List of station UUIDs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  format: uuid
+    post:
+      tags: [Preferences]
+      operationId: saveStationPreferences
+      summary: Save station preferences (replaces existing — used in onboarding picker)
       requestBody:
         required: true
         content:

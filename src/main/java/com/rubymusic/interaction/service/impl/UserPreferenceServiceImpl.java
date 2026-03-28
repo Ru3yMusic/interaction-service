@@ -2,10 +2,13 @@ package com.rubymusic.interaction.service.impl;
 
 import com.rubymusic.interaction.model.UserArtistPreference;
 import com.rubymusic.interaction.model.UserGenrePreference;
+import com.rubymusic.interaction.model.UserStationPreference;
 import com.rubymusic.interaction.model.id.UserArtistPreferenceId;
 import com.rubymusic.interaction.model.id.UserGenrePreferenceId;
+import com.rubymusic.interaction.model.id.UserStationPreferenceId;
 import com.rubymusic.interaction.repository.UserArtistPreferenceRepository;
 import com.rubymusic.interaction.repository.UserGenrePreferenceRepository;
+import com.rubymusic.interaction.repository.UserStationPreferenceRepository;
 import com.rubymusic.interaction.service.UserPreferenceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,6 +24,7 @@ public class UserPreferenceServiceImpl implements UserPreferenceService {
 
     private final UserGenrePreferenceRepository genrePreferenceRepository;
     private final UserArtistPreferenceRepository artistPreferenceRepository;
+    private final UserStationPreferenceRepository stationPreferenceRepository;
 
     @Override
     @Transactional
@@ -59,6 +63,26 @@ public class UserPreferenceServiceImpl implements UserPreferenceService {
         return artistPreferenceRepository.findAllByUserId(userId)
                 .stream()
                 .map(p -> p.getId().getArtistId())
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public void saveStationPreferences(UUID userId, List<UUID> stationIds) {
+        stationPreferenceRepository.deleteAllByUserId(userId);
+        List<UserStationPreference> preferences = stationIds.stream()
+                .map(stationId -> UserStationPreference.builder()
+                        .id(new UserStationPreferenceId(userId, stationId))
+                        .build())
+                .toList();
+        stationPreferenceRepository.saveAll(preferences);
+    }
+
+    @Override
+    public List<UUID> getStationPreferences(UUID userId) {
+        return stationPreferenceRepository.findAllByUserId(userId)
+                .stream()
+                .map(p -> p.getId().getStationId())
                 .toList();
     }
 }

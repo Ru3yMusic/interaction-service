@@ -42,4 +42,15 @@ public class PreferencesController implements PreferencesApi {
         preferenceService.saveArtistPreferences(currentUserId(), body.getIds());
         return ResponseEntity.noContent().build();
     }
+
+    @Override
+    public ResponseEntity<List<UUID>> getStationPreferences() {
+        return ResponseEntity.ok(preferenceService.getStationPreferences(currentUserId()));
+    }
+
+    @Override
+    public ResponseEntity<Void> saveStationPreferences(UuidListRequest body) {
+        preferenceService.saveStationPreferences(currentUserId(), body.getIds());
+        return ResponseEntity.noContent().build();
+    }
 }
