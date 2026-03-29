@@ -1,5 +1,6 @@
 package com.rubymusic.interaction.service.impl;
 
+import com.rubymusic.interaction.client.PlaylistServiceClient;
 import com.rubymusic.interaction.model.HiddenSong;
 import com.rubymusic.interaction.model.SongLike;
 import com.rubymusic.interaction.model.id.SongLikeId;
@@ -23,12 +24,13 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 public class SongInteractionServiceImpl implements SongInteractionService {
 
-    private static final String TOPIC_SONG_LIKED    = "song.liked";
-    private static final String TOPIC_SONG_UNLIKED  = "song.unliked";
+    private static final String TOPIC_SONG_LIKED   = "song.liked";
+    private static final String TOPIC_SONG_UNLIKED = "song.unliked";
 
     private final SongLikeRepository songLikeRepository;
     private final HiddenSongRepository hiddenSongRepository;
     private final KafkaTemplate<String, String> kafkaTemplate;
+    private final PlaylistServiceClient playlistServiceClient;
 
     @Override
     @Transactional
@@ -41,8 +43,14 @@ public class SongInteractionServiceImpl implements SongInteractionService {
                 .build();
         songLikeRepository.save(like);
 
-        // Notify catalog-service to increment likes_count
         kafkaTemplate.send(TOPIC_SONG_LIKED, songId.toString());
+
+        try {
+            playlistServiceClient.addSongToSystemPlaylist(userId, songId);
+        } catch (Exception ex) {
+            log.warn("Could not sync liked song {} to system playlist for user {}: {}", songId, userId, ex.getMessage());
+        }
+
         log.debug("Song liked: user={} song={}", userId, songId);
     }
 
@@ -53,6 +61,12 @@ public class SongInteractionServiceImpl implements SongInteractionService {
         if (songLikeRepository.existsById(id)) {
             songLikeRepository.deleteById(id);
             kafkaTemplate.send(TOPIC_SONG_UNLIKED, songId.toString());
+
+            try {
+                playlistServiceClient.removeSongFromSystemPlaylist(userId, songId);
+            } catch (Exception ex) {
+                log.warn("Could not sync unliked song {} from system playlist for user {}: {}", songId, userId, ex.getMessage());
+            }
         }
     }
 

@@ -1,7 +1,7 @@
 package com.rubymusic.interaction.controller;
 
-import com.rubymusic.interaction.dto.LibraryItemType;
 import com.rubymusic.interaction.dto.LibraryRequest;
+import com.rubymusic.interaction.model.enums.LibraryItemType;
 import com.rubymusic.interaction.dto.UuidPage;
 import com.rubymusic.interaction.service.UserLibraryService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,8 +26,7 @@ public class LibraryController implements LibraryApi {
 
     @Override
     public ResponseEntity<UuidPage> getLibrary(LibraryItemType type, Integer page, Integer size) {
-        var entityType = com.rubymusic.interaction.model.enums.LibraryItemType.valueOf(type.name());
-        Page<UUID> p = libraryService.getLibrary(currentUserId(), entityType, PageRequest.of(page, size));
+        Page<UUID> p = libraryService.getLibrary(currentUserId(), type, PageRequest.of(page, size));
         return ResponseEntity.ok(new UuidPage()
                 .content(p.getContent())
                 .totalElements((int) p.getTotalElements())
@@ -38,15 +37,13 @@ public class LibraryController implements LibraryApi {
 
     @Override
     public ResponseEntity<Void> addToLibrary(LibraryRequest body) {
-        var entityType = com.rubymusic.interaction.model.enums.LibraryItemType.valueOf(body.getType().name());
-        libraryService.addToLibrary(currentUserId(), entityType, body.getItemId());
+        libraryService.addToLibrary(currentUserId(), body.getType(), body.getItemId());
         return ResponseEntity.noContent().build();
     }
 
     @Override
     public ResponseEntity<Void> removeFromLibrary(LibraryItemType type, UUID itemId) {
-        var entityType = com.rubymusic.interaction.model.enums.LibraryItemType.valueOf(type.name());
-        libraryService.removeFromLibrary(currentUserId(), entityType, itemId);
+        libraryService.removeFromLibrary(currentUserId(), type, itemId);
         return ResponseEntity.noContent().build();
     }
 }
