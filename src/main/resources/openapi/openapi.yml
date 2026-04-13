@@ -23,6 +23,8 @@ tags:
   - name: Library
     description: Saved albums and artists
   - name: Play History
+  - name: Internal
+    description: Service-to-service endpoints (require SERVICE-role JWT)
 
 paths:
 
@@ -298,6 +300,27 @@ paths:
         '204':
           description: Play recorded
 
+  # ── Internal (service-to-service) ────────────────────────────────────────────
+
+  /api/internal/v1/users/{userId}/likes:
+    get:
+      tags: [Internal]
+      operationId: getUserLikes
+      summary: Get liked song IDs for a user (service-to-service)
+      security:
+        - ServiceJwt: []
+      parameters:
+        - $ref: '#/components/parameters/UserIdParam'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+      responses:
+        '200':
+          description: Paginated list of liked song UUIDs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserLikesInternalResponse'
+
 # ── Components ────────────────────────────────────────────────────────────────
 
 components:
@@ -306,8 +329,20 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+    ServiceJwt:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: SERVICE-role JWT required (issued by auth-service)
 
   parameters:
+    UserIdParam:
+      name: userId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     SongIdParam:
       name: songId
       in: path
@@ -425,6 +460,23 @@ components:
         page:
           type: integer
         size:
+          type: integer
+
+    UserLikesInternalResponse:
+      type: object
+      properties:
+        songIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+        totalPages:
           type: integer
 
     ErrorResponse:

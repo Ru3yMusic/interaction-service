@@ -1,6 +1,6 @@
 package com.rubymusic.interaction.service.impl;
 
-import com.rubymusic.interaction.client.PlaylistServiceClient;
+import com.rubymusic.interaction.client.playlist.api.InternalPlaylistApi;
 import com.rubymusic.interaction.model.HiddenSong;
 import com.rubymusic.interaction.model.SongLike;
 import com.rubymusic.interaction.model.id.SongLikeId;
@@ -30,7 +30,7 @@ public class SongInteractionServiceImpl implements SongInteractionService {
     private final SongLikeRepository songLikeRepository;
     private final HiddenSongRepository hiddenSongRepository;
     private final KafkaTemplate<String, String> kafkaTemplate;
-    private final PlaylistServiceClient playlistServiceClient;
+    private final InternalPlaylistApi internalPlaylistApi;
 
     @Override
     @Transactional
@@ -46,7 +46,7 @@ public class SongInteractionServiceImpl implements SongInteractionService {
         kafkaTemplate.send(TOPIC_SONG_LIKED, songId.toString());
 
         try {
-            playlistServiceClient.addSongToSystemPlaylist(userId, songId);
+            internalPlaylistApi.addSongToSystemPlaylist(userId, songId);
         } catch (Exception ex) {
             log.warn("Could not sync liked song {} to system playlist for user {}: {}", songId, userId, ex.getMessage());
         }
@@ -63,7 +63,7 @@ public class SongInteractionServiceImpl implements SongInteractionService {
             kafkaTemplate.send(TOPIC_SONG_UNLIKED, songId.toString());
 
             try {
-                playlistServiceClient.removeSongFromSystemPlaylist(userId, songId);
+                internalPlaylistApi.removeSongFromSystemPlaylist(userId, songId);
             } catch (Exception ex) {
                 log.warn("Could not sync unliked song {} from system playlist for user {}: {}", songId, userId, ex.getMessage());
             }
