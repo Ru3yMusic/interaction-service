@@ -23,7 +23,7 @@ tags:
     description: Password recovery via OTP
   - name: Users
     description: User profile management
-  - name: Internal
+  - name: InternalAuth
     description: Internal service-to-service endpoints (not exposed publicly via gateway)
 
 paths:
@@ -378,7 +378,7 @@ paths:
 
   /api/internal/v1/service-token:
     post:
-      tags: [Internal]
+      tags: [InternalAuth]
       operationId: issueServiceToken
       summary: Issue a service JWT for M2M authentication (secret-based)
       security:
@@ -405,7 +405,7 @@ paths:
 
   /api/internal/v1/users/{id}:
     get:
-      tags: [Internal]
+      tags: [InternalAuth]
       operationId: getInternalUserById
       summary: Fetch minimal user data for internal service consumption
       security:
@@ -451,7 +451,7 @@ paths:
 
   /api/internal/v1/users/batch:
     get:
-      tags: [Internal]
+      tags: [InternalAuth]
       operationId: getInternalUsersBatch
       summary: Fetch multiple users by comma-separated UUIDs (unknown IDs silently omitted)
       security:

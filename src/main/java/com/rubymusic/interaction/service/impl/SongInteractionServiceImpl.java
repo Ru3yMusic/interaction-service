@@ -1,6 +1,7 @@
 package com.rubymusic.interaction.service.impl;
 
 import com.rubymusic.interaction.client.playlist.api.InternalPlaylistApi;
+import com.rubymusic.interaction.client.playlist.model.SystemSongRequest;
 import com.rubymusic.interaction.model.HiddenSong;
 import com.rubymusic.interaction.model.SongLike;
 import com.rubymusic.interaction.model.id.SongLikeId;
@@ -46,7 +47,10 @@ public class SongInteractionServiceImpl implements SongInteractionService {
         kafkaTemplate.send(TOPIC_SONG_LIKED, songId.toString());
 
         try {
-            internalPlaylistApi.addSongToSystemPlaylist(userId, songId);
+            SystemSongRequest request = new SystemSongRequest()
+                    .userId(userId)
+                    .songId(songId);
+            internalPlaylistApi.addSongToSystemPlaylistInternal(request);
         } catch (Exception ex) {
             log.warn("Could not sync liked song {} to system playlist for user {}: {}", songId, userId, ex.getMessage());
         }
@@ -63,7 +67,7 @@ public class SongInteractionServiceImpl implements SongInteractionService {
             kafkaTemplate.send(TOPIC_SONG_UNLIKED, songId.toString());
 
             try {
-                internalPlaylistApi.removeSongFromSystemPlaylist(userId, songId);
+                internalPlaylistApi.removeSongFromSystemPlaylistInternal(userId, songId);
             } catch (Exception ex) {
                 log.warn("Could not sync unliked song {} from system playlist for user {}: {}", songId, userId, ex.getMessage());
             }

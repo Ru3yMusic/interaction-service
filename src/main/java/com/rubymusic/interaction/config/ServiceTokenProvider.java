@@ -1,6 +1,7 @@
 package com.rubymusic.interaction.config;
 
 import com.rubymusic.interaction.client.auth.api.InternalAuthApi;
+import com.rubymusic.interaction.client.auth.model.ServiceTokenRequest;
 import com.rubymusic.interaction.client.auth.model.ServiceTokenResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +32,10 @@ public class ServiceTokenProvider {
 
     public String getToken() {
         if (cachedToken == null || System.currentTimeMillis() > tokenExpiresAt - 60_000) {
-            ServiceTokenResponse response = internalAuthApi.getServiceToken(serviceName, serviceSecret);
+            ServiceTokenRequest request = new ServiceTokenRequest()
+                    .serviceName(serviceName)
+                    .serviceSecret(serviceSecret);
+            ServiceTokenResponse response = internalAuthApi.issueServiceToken(request);
             cachedToken = response.getToken();
             tokenExpiresAt = System.currentTimeMillis() + (response.getExpiresIn() * 1000L);
             log.debug("Refreshed service token for: {}", serviceName);

@@ -1,6 +1,7 @@
 package com.rubymusic.interaction.service;
 
 import com.rubymusic.interaction.client.playlist.api.InternalPlaylistApi;
+import com.rubymusic.interaction.client.playlist.model.SystemSongRequest;
 import com.rubymusic.interaction.model.SongLike;
 import com.rubymusic.interaction.model.id.SongLikeId;
 import com.rubymusic.interaction.repository.HiddenSongRepository;
@@ -18,7 +19,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
 /**
@@ -55,7 +56,8 @@ class SongInteractionServiceImplTest {
         service.likeSong(USER_ID, SONG_ID);
 
         // Then — playlist client must be called to keep system playlist in sync
-        verify(internalPlaylistApi, times(1)).addSongToSystemPlaylist(USER_ID, SONG_ID);
+        verify(internalPlaylistApi, times(1)).addSongToSystemPlaylistInternal(argThat(req ->
+                USER_ID.equals(req.getUserId()) && SONG_ID.equals(req.getSongId())));
     }
 
     // TRIANGULATE: playlist client failure must NOT propagate (fire-and-forget)
@@ -65,7 +67,7 @@ class SongInteractionServiceImplTest {
         when(songLikeRepository.existsByIdUserIdAndIdSongId(USER_ID, SONG_ID)).thenReturn(false);
         when(songLikeRepository.save(any(SongLike.class))).thenAnswer(inv -> inv.getArgument(0));
         doThrow(new RestClientException("playlist-service unavailable"))
-                .when(internalPlaylistApi).addSongToSystemPlaylist(USER_ID, SONG_ID);
+                .when(internalPlaylistApi).addSongToSystemPlaylistInternal(any(SystemSongRequest.class));
 
         // When / Then — exception is swallowed; no exception escapes the service
         assertThatNoException().isThrownBy(() -> service.likeSong(USER_ID, SONG_ID));
@@ -81,7 +83,7 @@ class SongInteractionServiceImplTest {
         service.likeSong(USER_ID, SONG_ID);
 
         // Then — playlist client must NOT be called (idempotency guard)
-        verify(internalPlaylistApi, never()).addSongToSystemPlaylist(any(), any());
+        verify(internalPlaylistApi, never()).addSongToSystemPlaylistInternal(any(SystemSongRequest.class));
     }
 
     // ── unlikeSong ────────────────────────────────────────────────────────────
@@ -96,7 +98,7 @@ class SongInteractionServiceImplTest {
         service.unlikeSong(USER_ID, SONG_ID);
 
         // Then
-        verify(internalPlaylistApi, times(1)).removeSongFromSystemPlaylist(USER_ID, SONG_ID);
+        verify(internalPlaylistApi, times(1)).removeSongFromSystemPlaylistInternal(USER_ID, SONG_ID);
     }
 
     // TRIANGULATE: playlist client failure on unlike must also be swallowed
@@ -106,7 +108,7 @@ class SongInteractionServiceImplTest {
         SongLikeId likeId = new SongLikeId(USER_ID, SONG_ID);
         when(songLikeRepository.existsById(likeId)).thenReturn(true);
         doThrow(new RestClientException("playlist-service unavailable"))
-                .when(internalPlaylistApi).removeSongFromSystemPlaylist(USER_ID, SONG_ID);
+                .when(internalPlaylistApi).removeSongFromSystemPlaylistInternal(USER_ID, SONG_ID);
 
         // When / Then
         assertThatNoException().isThrownBy(() -> service.unlikeSong(USER_ID, SONG_ID));

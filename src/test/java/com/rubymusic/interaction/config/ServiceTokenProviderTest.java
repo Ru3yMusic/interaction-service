@@ -1,13 +1,15 @@
 package com.rubymusic.interaction.config;
 
 import com.rubymusic.interaction.client.auth.api.InternalAuthApi;
+import com.rubymusic.interaction.client.auth.model.ServiceTokenRequest;
 import com.rubymusic.interaction.client.auth.model.ServiceTokenResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
 /**
@@ -40,7 +42,9 @@ class ServiceTokenProviderTest {
         ServiceTokenResponse response = new ServiceTokenResponse()
                 .token("service-jwt-xyz")
                 .expiresIn(3600);
-        when(mockAuthApi.getServiceToken("interaction-service", "test-secret"))
+        when(mockAuthApi.issueServiceToken(argThat(req ->
+                "interaction-service".equals(req.getServiceName())
+                        && "test-secret".equals(req.getServiceSecret()))))
                 .thenReturn(response);
 
         // When
@@ -48,7 +52,9 @@ class ServiceTokenProviderTest {
 
         // Then
         assertThat(token).isEqualTo("service-jwt-xyz");
-        verify(mockAuthApi, times(1)).getServiceToken("interaction-service", "test-secret");
+        verify(mockAuthApi, times(1)).issueServiceToken(argThat(req ->
+                "interaction-service".equals(req.getServiceName())
+                        && "test-secret".equals(req.getServiceSecret())));
     }
 
     // TRIANGULATE: subsequent call must NOT hit auth-service again (cache hit)
@@ -58,7 +64,7 @@ class ServiceTokenProviderTest {
         ServiceTokenResponse response = new ServiceTokenResponse()
                 .token("cached-token")
                 .expiresIn(3600);
-        when(mockAuthApi.getServiceToken(anyString(), anyString())).thenReturn(response);
+        when(mockAuthApi.issueServiceToken(any(ServiceTokenRequest.class))).thenReturn(response);
         provider.getToken(); // warm the cache
 
         // When
@@ -66,7 +72,7 @@ class ServiceTokenProviderTest {
 
         // Then
         assertThat(token).isEqualTo("cached-token");
-        verify(mockAuthApi, times(1)).getServiceToken(anyString(), anyString()); // only 1 call total
+        verify(mockAuthApi, times(1)).issueServiceToken(any(ServiceTokenRequest.class)); // only 1 call total
     }
 
     // TRIANGULATE: expired token (expiresIn=0) triggers a refresh on next call
@@ -79,7 +85,7 @@ class ServiceTokenProviderTest {
         ServiceTokenResponse refreshedResponse = new ServiceTokenResponse()
                 .token("refreshed-token")
                 .expiresIn(3600);
-        when(mockAuthApi.getServiceToken(anyString(), anyString()))
+        when(mockAuthApi.issueServiceToken(any(ServiceTokenRequest.class)))
                 .thenReturn(expiredResponse, refreshedResponse);
 
         provider.getToken(); // first call — caches token that is immediately "expired"
@@ -89,6 +95,6 @@ class ServiceTokenProviderTest {
 
         // Then
         assertThat(token).isEqualTo("refreshed-token");
-        verify(mockAuthApi, times(2)).getServiceToken(anyString(), anyString());
+        verify(mockAuthApi, times(2)).issueServiceToken(any(ServiceTokenRequest.class));
     }
 }
