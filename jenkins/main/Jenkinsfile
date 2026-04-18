@@ -7,7 +7,7 @@ pipeline {
   }
   environment {
     SONARQUBE_SERVER = 'sonarqube'
-    DOCKER_IMAGE = 'darfelio/rbm-catalog-service'
+    DOCKER_IMAGE = 'darfelio/rbm-interact-service'
     DOCKER_TAG = "v${BUILD_NUMBER}"
     DEPLOY_HOST = '146.181.41.236'
     DEPLOY_USER = 'ubuntu'
@@ -34,7 +34,7 @@ pipeline {
           withSonarQubeEnv("${SONARQUBE_SERVER}") {
             sh """
               mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
-                -Dsonar.projectKey=rbm-catalog-service \
+                -Dsonar.projectKey=rbm-interact-service \
                 -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
             """
           }
@@ -63,8 +63,8 @@ pipeline {
           sh """
             ssh -o StrictHostKeyChecking=no ${DEPLOY_USER}@${DEPLOY_HOST} '
               docker pull ${DOCKER_IMAGE}:${DOCKER_TAG} &&
-              export CATALOG_SERVICE_TAG=${DOCKER_TAG} &&
-              docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --no-deps catalog-service
+              export INTERACTION_SERVICE_TAG=${DOCKER_TAG} &&
+              docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --no-deps interaction-service
             '
           """
         }
