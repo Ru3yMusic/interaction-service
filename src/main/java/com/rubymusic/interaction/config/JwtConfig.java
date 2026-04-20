@@ -6,7 +6,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
+import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 
@@ -25,7 +27,7 @@ public class JwtConfig {
 
     @Bean
     @ConditionalOnMissingBean(PublicKey.class)
-    public PublicKey jwtPublicKey(JwtProperties props) throws Exception {
+    public PublicKey jwtPublicKey(JwtProperties props) throws NoSuchAlgorithmException, InvalidKeySpecException {
         byte[] decoded = Base64.getDecoder().decode(stripPem(props.getPublicKey()));
         return KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(decoded));
     }
