@@ -52,7 +52,7 @@ public class SongInteractionServiceImpl implements SongInteractionService {
                     .songId(songId);
             internalPlaylistApi.addSongToSystemPlaylistInternal(request);
         } catch (Exception ex) {
-            log.warn("Could not sync liked song {} to system playlist for user {}: {}", songId, userId, ex.getMessage());
+            log.error("Could not sync liked song {} to system playlist for user {}", songId, userId, ex);
         }
 
         log.debug("Song liked: user={} song={}", userId, songId);
@@ -69,7 +69,7 @@ public class SongInteractionServiceImpl implements SongInteractionService {
             try {
                 internalPlaylistApi.removeSongFromSystemPlaylistInternal(userId, songId);
             } catch (Exception ex) {
-                log.warn("Could not sync unliked song {} from system playlist for user {}: {}", songId, userId, ex.getMessage());
+                log.error("Could not sync unliked song {} from system playlist for user {}", songId, userId, ex);
             }
         }
     }
