@@ -9,7 +9,7 @@ import java.util.UUID;
 public interface PlayHistoryService {
 
     /**
-     * Records a play and publishes a {@code song.played} Kafka event so
+     * Recordss a play and publishes a {@code song.played} Kafka event so
      * catalog-service can increment the song's play_count asynchronously.
      */
     void recordPlay(UUID userId, UUID songId, int durationPlayedSeconds);
