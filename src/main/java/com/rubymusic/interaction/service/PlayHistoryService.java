@@ -1,9 +1,11 @@
 package com.rubymusic.interaction.service;
 
 import com.rubymusic.interaction.model.PlayHistory;
+import com.rubymusic.interaction.model.UserPlaybackCheckpoint;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.Optional;
 import java.util.UUID;
 
 public interface PlayHistoryService {
@@ -15,4 +17,8 @@ public interface PlayHistoryService {
     void recordPlay(UUID userId, UUID songId, int durationPlayedSeconds);
 
     Page<PlayHistory> getPlayHistory(UUID userId, Pageable pageable);
+
+    void savePlaybackCheckpoint(UUID userId, UUID songId, int currentTimeSeconds);
+
+    Optional<UserPlaybackCheckpoint> getPlaybackCheckpoint(UUID userId);
 }

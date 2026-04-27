@@ -31,14 +31,21 @@ public class ServiceTokenProvider {
     private volatile long tokenExpiresAt;
 
     public String getToken() {
+        // Double-checked locking: avoid token-fetch storm when cache expires under
+        // concurrent load. Without the synchronized block, ALL threads passing the
+        // outer check simultaneously would call auth-service in parallel.
         if (cachedToken == null || System.currentTimeMillis() > tokenExpiresAt - 60_000) {
-            ServiceTokenRequest request = new ServiceTokenRequest()
-                    .serviceName(serviceName)
-                    .serviceSecret(serviceSecret);
-            ServiceTokenResponse response = internalAuthApi.issueServiceToken(request);
-            cachedToken = response.getToken();
-            tokenExpiresAt = System.currentTimeMillis() + (response.getExpiresIn() * 1000L);
-            log.debug("Refreshed service token for: {}", serviceName);
+            synchronized (this) {
+                if (cachedToken == null || System.currentTimeMillis() > tokenExpiresAt - 60_000) {
+                    ServiceTokenRequest request = new ServiceTokenRequest()
+                            .serviceName(serviceName)
+                            .serviceSecret(serviceSecret);
+                    ServiceTokenResponse response = internalAuthApi.issueServiceToken(request);
+                    cachedToken = response.getToken();
+                    tokenExpiresAt = System.currentTimeMillis() + (response.getExpiresIn() * 1000L);
+                    log.debug("Refreshed service token for: {}", serviceName);
+                }
+            }
         }
         return cachedToken;
     }

@@ -1,7 +1,9 @@
 package com.rubymusic.interaction.service.impl;
 
 import com.rubymusic.interaction.model.PlayHistory;
+import com.rubymusic.interaction.model.UserPlaybackCheckpoint;
 import com.rubymusic.interaction.repository.PlayHistoryRepository;
+import com.rubymusic.interaction.repository.UserPlaybackCheckpointRepository;
 import com.rubymusic.interaction.service.PlayHistoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,6 +13,8 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -22,6 +26,7 @@ public class PlayHistoryServiceImpl implements PlayHistoryService {
     private static final String TOPIC_SONG_PLAYED = "song.played";
 
     private final PlayHistoryRepository playHistoryRepository;
+    private final UserPlaybackCheckpointRepository userPlaybackCheckpointRepository;
     private final KafkaTemplate<String, String> kafkaTemplate;
 
     @Override
@@ -42,5 +47,23 @@ public class PlayHistoryServiceImpl implements PlayHistoryService {
     @Override
     public Page<PlayHistory> getPlayHistory(UUID userId, Pageable pageable) {
         return playHistoryRepository.findAllByUserIdOrderByPlayedAtDesc(userId, pageable);
+    }
+
+    @Override
+    @Transactional
+    public void savePlaybackCheckpoint(UUID userId, UUID songId, int currentTimeSeconds) {
+        int safeCurrentTime = Math.max(0, currentTimeSeconds);
+        UserPlaybackCheckpoint checkpoint = userPlaybackCheckpointRepository.findById(userId)
+                .orElseGet(() -> UserPlaybackCheckpoint.builder().userId(userId).build());
+
+        checkpoint.setSongId(songId);
+        checkpoint.setCurrentTimeSeconds(safeCurrentTime);
+        checkpoint.setUpdatedAt(LocalDateTime.now());
+        userPlaybackCheckpointRepository.save(checkpoint);
+    }
+
+    @Override
+    public Optional<UserPlaybackCheckpoint> getPlaybackCheckpoint(UUID userId) {
+        return userPlaybackCheckpointRepository.findById(userId);
     }
 }
